@@ -10,7 +10,7 @@
 
 ## 📥 Установка
 
-Скачай `.deb` файл с [Releases](https://github.com/USERNAME/lt-tool/releases), затем:
+Скачай `.deb` файл с [Releases](https://github.com/Vahagn-99/lt-tool/releases), затем:
 
 ```bash
 sudo dpkg -i lt_1.0.0_all.deb

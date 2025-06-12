@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Загрузка переменных из .env, если он существует
+ENV_FILE=$(find . -maxdepth 1 -name ".env" | head -n 1)
+if [ -f "$ENV_FILE" ]; then
+  export $(grep -v '^#' "$ENV_FILE" | xargs)
+fi
+
+# Значения по умолчанию
+SERVICE=${LT_CONTAINER_NAME:-app}
+SHELL_CMD=${LT_CONTAINER_SHELL:-bash}
+
+# Справка
+show_help() {
+  echo "Laravel Tool CLI (lt)"
+  echo ""
+  echo "Доступные команды:"
+  echo "  lt up                        Запуск контейнеров"
+  echo "  lt down                      Остановка контейнеров"
+  echo "  lt restart                   Перезапуск контейнеров"
+  echo "  lt ps                        Показать статус контейнеров"
+  echo "  lt logs [service]           Логи контейнера"
+  echo "  lt build                    Сборка контейнеров"
+  echo "  lt exec [cmd]               Выполнить команду в контейнере ($SERVICE)"
+  echo "  lt shell                    Открыть $SHELL_CMD в контейнере"
+  echo "  lt artisan [cmd]            Artisan команда"
+  echo "  lt composer [cmd]           Composer команда"
+  echo "  lt help                     Показать справку"
+  echo ""
+  echo "Docker Compose команды:"
+  echo "  config, pull, push, run, start, stop, rm, kill, top, version, pause, unpause"
+  echo ""
+  echo "Настройки через .env:"
+  echo "  LT_CONTAINER_NAME           Имя контейнера (по умолчанию: app)"
+  echo "  LT_CONTAINER_SHELL          Оболочка внутри контейнера (по умолчанию: bash)"
+}
+
+# Обработка команд
+case "$1" in
+  up|down|restart|build|start|stop|rm|pull|push|top|kill|pause|unpause|config|version|ps)
+    docker compose "$@"
+    ;;
+  logs)
+    shift
+    docker compose logs "$@"
+    ;;
+  artisan)
+    shift
+    docker compose exec "$SERVICE" php artisan "$@"
+    ;;
+  composer)
+    shift
+    docker compose exec "$SERVICE" composer "$@"
+    ;;
+  shell|bash)
+    docker compose exec "$SERVICE" "$SHELL_CMD"
+    ;;
+  exec)
+    shift
+    docker compose exec "$SERVICE" "$@"
+    ;;
+  help|-h|--help)
+    show_help
+    ;;
+  *)
+    docker compose exec "$SERVICE" "$@"
+    ;;
+esac

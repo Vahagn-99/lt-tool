@@ -1,0 +1,8 @@
+Package: lt
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Depends: docker compose
+Maintainer: Vahagn <vahagn99ghukasyan@gmail.com>
+Description: LT — облегчённый Laravel‑обертка над docker compose

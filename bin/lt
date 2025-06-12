@@ -3,7 +3,7 @@
 # Путь к .env
 ENV_FILE=$(find . -maxdepth 1 -name ".env" | head -n 1)
 
-# Функция загрузки одной переменной
+# Функция загрузки переменной
 load_env_var() {
   grep -E "^$1=" "$ENV_FILE" | tail -n 1 | sed 's/^.*=//' | tr -d '"'
 }
@@ -19,9 +19,20 @@ fi
 # Значения по умолчанию
 : ${SERVICE:=app}
 : ${SHELL_CMD:=bash}
-USER_ARG=${CONTAINER_USER:+"--user $CONTAINER_USER"}
-: ${USER_ARG:="--user $(id -u):$(id -g)"}
-COMPOSE_FILE_ARG=${COMPOSE_PATH:+-f $COMPOSE_PATH}
+
+# Аргументы пользователя
+if [ -n "$CONTAINER_USER" ]; then
+  USER_ARG=(--user "$CONTAINER_USER")
+else
+  USER_ARG=(--user "$(id -u):$(id -g)")
+fi
+
+# Аргументы docker compose файла
+if [ -n "$COMPOSE_PATH" ]; then
+  COMPOSE_FILE_ARG=(-f "$COMPOSE_PATH")
+else
+  COMPOSE_FILE_ARG=()
+fi
 
 # Справка
 show_help() {
@@ -47,37 +58,37 @@ show_help() {
   echo "  LT_CONTAINER_NAME           Имя контейнера (по умолчанию: app)"
   echo "  LT_CONTAINER_SHELL          Оболочка внутри контейнера (по умолчанию: bash)"
   echo "  LT_CONTAINER_USER           Пользователь в контейнере (или UID:GID с хоста)"
-  echo "  LT_DOCKER_COMPOSE_PATH      Путь к кастомному docker-compose.yml"
+  echo "  LT_DOCKER_COMPOSE_PATH      Путь к docker-compose.yml (или массив файлов)"
 }
 
 # Обработка команд
 case "$1" in
   up|down|restart|build|start|stop|rm|pull|push|top|kill|pause|unpause|config|version|ps)
-    docker compose $COMPOSE_FILE_ARG "$@"
+    docker compose "${COMPOSE_FILE_ARG[@]}" "$@"
     ;;
   logs)
     shift
-    docker compose $COMPOSE_FILE_ARG logs "$@"
+    docker compose "${COMPOSE_FILE_ARG[@]}" logs "$@"
     ;;
   artisan)
     shift
-    docker compose $COMPOSE_FILE_ARG exec $USER_ARG "$SERVICE" php artisan "$@"
+    docker compose "${COMPOSE_FILE_ARG[@]}" exec "${USER_ARG[@]}" "$SERVICE" php artisan "$@"
     ;;
   composer)
     shift
-    docker compose $COMPOSE_FILE_ARG exec $USER_ARG "$SERVICE" composer "$@"
+    docker compose "${COMPOSE_FILE_ARG[@]}" exec "${USER_ARG[@]}" "$SERVICE" composer "$@"
     ;;
   shell|bash)
-    docker compose $COMPOSE_FILE_ARG exec $USER_ARG "$SERVICE" "$SHELL_CMD"
+    docker compose "${COMPOSE_FILE_ARG[@]}" exec "${USER_ARG[@]}" "$SERVICE" "$SHELL_CMD"
     ;;
   exec)
     shift
-    docker compose $COMPOSE_FILE_ARG exec $USER_ARG "$SERVICE" "$@"
+    docker compose "${COMPOSE_FILE_ARG[@]}" exec "${USER_ARG[@]}" "$SERVICE" "$@"
     ;;
   help|-h|--help)
     show_help
     ;;
   *)
-    docker compose $COMPOSE_FILE_ARG exec $USER_ARG "$SERVICE" "$@"
+    docker compose "${COMPOSE_FILE_ARG[@]}" exec "${USER_ARG[@]}" "$SERVICE" "$@"
     ;;
 esac

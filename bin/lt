@@ -9,6 +9,8 @@ fi
 # Значения по умолчанию
 SERVICE=${LT_CONTAINER_NAME:-app}
 SHELL_CMD=${LT_CONTAINER_SHELL:-bash}
+USER_ARG=${LT_CONTAINER_USER:+"--user $LT_CONTAINER_USER"}
+: ${USER_ARG:="--user $(id -u):$(id -g)"}
 
 # Справка
 show_help() {
@@ -33,6 +35,7 @@ show_help() {
   echo "Настройки через .env:"
   echo "  LT_CONTAINER_NAME           Имя контейнера (по умолчанию: app)"
   echo "  LT_CONTAINER_SHELL          Оболочка внутри контейнера (по умолчанию: bash)"
+  echo "  LT_CONTAINER_USER           Пользователь в контейнере (или UID:GID с хоста)"
 }
 
 # Обработка команд
@@ -46,23 +49,23 @@ case "$1" in
     ;;
   artisan)
     shift
-    docker compose exec "$SERVICE" php artisan "$@"
+    docker compose exec $USER_ARG "$SERVICE" php artisan "$@"
     ;;
   composer)
     shift
-    docker compose exec "$SERVICE" composer "$@"
+    docker compose exec $USER_ARG "$SERVICE" composer "$@"
     ;;
   shell|bash)
-    docker compose exec "$SERVICE" "$SHELL_CMD"
+    docker compose exec $USER_ARG "$SERVICE" "$SHELL_CMD"
     ;;
   exec)
     shift
-    docker compose exec "$SERVICE" "$@"
+    docker compose exec $USER_ARG "$SERVICE" "$@"
     ;;
   help|-h|--help)
     show_help
     ;;
   *)
-    docker compose exec "$SERVICE" "$@"
+    docker compose exec $USER_ARG "$SERVICE" "$@"
     ;;
 esac

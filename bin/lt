@@ -1,19 +1,27 @@
 #!/bin/bash
 
-# Безопасная загрузка .env
+# Путь к .env
 ENV_FILE=$(find . -maxdepth 1 -name ".env" | head -n 1)
+
+# Функция загрузки одной переменной
+load_env_var() {
+  grep -E "^$1=" "$ENV_FILE" | tail -n 1 | sed 's/^.*=//' | tr -d '"'
+}
+
+# Только нужные переменные
 if [ -f "$ENV_FILE" ]; then
-  set -o allexport
-  source "$ENV_FILE"
-  set +o allexport
+  SERVICE=$(load_env_var LT_CONTAINER_NAME)
+  SHELL_CMD=$(load_env_var LT_CONTAINER_SHELL)
+  CONTAINER_USER=$(load_env_var LT_CONTAINER_USER)
+  COMPOSE_PATH=$(load_env_var LT_DOCKER_COMPOSE_PATH)
 fi
 
 # Значения по умолчанию
-SERVICE=${LT_CONTAINER_NAME:-app}
-SHELL_CMD=${LT_CONTAINER_SHELL:-bash}
-USER_ARG=${LT_CONTAINER_USER:+"--user $LT_CONTAINER_USER"}
+: ${SERVICE:=app}
+: ${SHELL_CMD:=bash}
+USER_ARG=${CONTAINER_USER:+"--user $CONTAINER_USER"}
 : ${USER_ARG:="--user $(id -u):$(id -g)"}
-COMPOSE_FILE_ARG=${LT_DOCKER_COMPOSE_PATH:+-f $LT_DOCKER_COMPOSE_PATH}
+COMPOSE_FILE_ARG=${COMPOSE_PATH:+-f $COMPOSE_PATH}
 
 # Справка
 show_help() {

@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# Загрузка переменных из .env, если он существует
+# Безопасная загрузка .env
 ENV_FILE=$(find . -maxdepth 1 -name ".env" | head -n 1)
 if [ -f "$ENV_FILE" ]; then
-  export $(grep -v '^#' "$ENV_FILE" | xargs)
+  set -o allexport
+  source "$ENV_FILE"
+  set +o allexport
 fi
 
 # Значения по умолчанию
